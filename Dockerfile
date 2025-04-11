@@ -22,8 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install additional package for SerpAPI
 RUN pip install google-search-results
 
-# Expose Chainlit default port
-EXPOSE 8000
+EXPOSE 8080
 
-# Run Chainlit app
-CMD ["chainlit", "run", "main.py", "-w"]
+CMD ["chainlit", "run", "main.py", "--host", "0.0.0.0", "--port", "8080"]
+
