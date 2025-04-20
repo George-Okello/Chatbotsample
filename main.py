@@ -6,6 +6,124 @@ from langchain_core.runnables import RunnableConfig
 from agent import setup_runnable
 from auth import setup_memory, restore_memory
 
+# Quiz questions database
+QUIZ_QUESTIONS = [
+    {
+        "category": "rules",
+        "question": "What is typically used as game pieces in Bano?",
+        "options": ["Dice", "Marbles or bottle caps", "Playing cards", "Sticks"],
+        "correct": 1
+    },
+    {
+        "category": "history",
+        "question": "In which country is Bano especially popular?",
+        "options": ["Nigeria", "South Africa", "Kenya", "Egypt"],
+        "correct": 2
+    },
+    {
+        "category": "rules",
+        "question": "What shape is typically drawn on the ground for Bano?",
+        "options": ["Square", "Triangle", "Circle", "Line"],
+        "correct": 2
+    },
+    {
+        "category": "strategy",
+        "question": "Which of these is NOT a common strategy in Bano?",
+        "options": ["Blocking opponent's moves", "Making alliances with other players", "Aiming for central positions",
+                    "Using multiple circles at once"],
+        "correct": 3
+    },
+    {
+        "category": "history",
+        "question": "What traditional materials were historically used to mark Bano playing fields?",
+        "options": ["Paint", "Chalk or charcoal", "Colored stones", "Wood markers"],
+        "correct": 1
+    },
+    {
+        "category": "culture",
+        "question": "When is Bano traditionally played in many African communities?",
+        "options": ["Only during formal competitions", "During religious ceremonies",
+                    "In leisure time after daily tasks", "Only during harvest season"],
+        "correct": 2
+    },
+    {
+        "category": "regional",
+        "question": "How might Bano gameplay differ between regions?",
+        "options": ["Number of players allowed", "Size of the playing area", "Rules for capturing pieces",
+                    "All of the above"],
+        "correct": 3
+    },
+    {
+        "category": "rules",
+        "question": "What happens when a player loses all their pieces in a traditional Bano game?",
+        "options": ["They immediately lose the game", "They can buy back pieces", "They wait until the next round",
+                    "They become the judge"],
+        "correct": 0
+    },
+    {
+        "category": "culture",
+        "question": "What social value is often taught through Bano?",
+        "options": ["Individual competition", "Community cooperation", "Resource management", "All of the above"],
+        "correct": 3
+    }
+]
+
+
+def get_topic_description(topic):
+    """Get a friendly description of the topic for the quiz introduction"""
+    topic_lower = topic.lower()
+
+    if "play" in topic_lower or "rules" in topic_lower or "how to" in topic_lower:
+        return "Bano gameplay and rules"
+    elif "history" in topic_lower or "origin" in topic_lower:
+        return "the history of Bano"
+    elif "region" in topic_lower or "country" in topic_lower or "where" in topic_lower:
+        return "where Bano is played"
+    elif "story" in topic_lower or "memory" in topic_lower or "experience" in topic_lower:
+        return "Bano stories and experiences"
+    elif "strategy" in topic_lower or "technique" in topic_lower or "winning" in topic_lower:
+        return "Bano strategies and techniques"
+    elif "culture" in topic_lower or "tradition" in topic_lower:
+        return "the cultural significance of Bano"
+    else:
+        return "Bano"
+
+
+async def select_relevant_quiz_questions(topic, count=3):
+    """Select quiz questions relevant to the topic of conversation"""
+    # Map topic keywords to categories
+    keyword_to_category = {
+        "play": "rules", "rules": "rules", "how to": "rules", "strategy": "strategy",
+        "history": "history", "origin": "history", "culture": "culture",
+        "region": "regional", "country": "regional", "where": "regional", "location": "regional",
+        "kenya": "regional", "tanzania": "regional", "africa": "regional",
+        "story": "culture", "memory": "culture", "experience": "culture"
+    }
+
+    # Determine categories based on keywords in topic
+    categories = set()
+    topic_lower = topic.lower()
+    for keyword, category in keyword_to_category.items():
+        if keyword in topic_lower:
+            categories.add(category)
+
+    # If no specific categories matched, use all categories
+    if not categories:
+        categories = {"rules", "history", "culture", "regional", "strategy"}
+
+    # Filter questions by selected categories
+    relevant_questions = [q for q in QUIZ_QUESTIONS if q["category"] in categories]
+
+    # If no relevant questions, fall back to all questions
+    if not relevant_questions:
+        relevant_questions = QUIZ_QUESTIONS
+
+    # Select the requested number of questions (random or ordered)
+    import random
+    selected = random.sample(relevant_questions, min(count, len(relevant_questions)))
+
+    return selected
+
 
 @cl.on_chat_start
 async def on_chat_start():
@@ -42,6 +160,100 @@ async def on_chat_start():
 async def on_chat_resume(thread: cl.types.ThreadDict):
     restore_memory(thread)
     setup_runnable()
+
+
+async def send_quiz_question(question_data):
+    """Send a single quiz question with option buttons"""
+    # Get current question number
+    current_question = cl.user_session.get("current_quiz_question", 0)
+
+    # Create option buttons
+    actions = [
+        cl.Action(
+            name="quiz_answer",
+            payload={"question": question_data["question"],
+                     "selected_index": i,
+                     "correct_index": question_data["correct"]},
+            label=option
+        ) for i, option in enumerate(question_data["options"])
+    ]
+
+    # Send the question with question number
+    await cl.Message(
+        content=f"🎮 **Question {current_question + 1}/3** 🎮\n\n{question_data['question']}",
+        actions=actions
+    ).send()
+
+
+async def send_suggestions_after_quiz(topic):
+    """Send follow-up suggestions after the quiz is complete"""
+    # Determine appropriate follow-up questions based on the conversation context
+    if "play" in topic or "rules" in topic or "how to" in topic:
+        follow_ups = [
+            {"question": "What are some winning strategies for Bano?", "label": "Winning strategies?"},
+            {"question": "Are there different variations of Bano?", "label": "Game variations"},
+            {"question": "What equipment do I need to play Bano?", "label": "Equipment needed"}
+        ]
+        # Suggest a new topic - history
+        new_topic = {"question": "What's the history behind the game of Bano?", "label": "Explore Bano's history"}
+    elif "history" in topic or "origin" in topic:
+        follow_ups = [
+            {"question": "What cultural significance does Bano have?", "label": "Cultural significance"},
+            {"question": "Are there similar games in other cultures?", "label": "Similar games"},
+            {"question": "How has Bano evolved over time?", "label": "Evolution of Bano"}
+        ]
+        # Suggest a new topic - regional variations
+        new_topic = {"question": "Where is Bano mostly played, and what are the regional differences?",
+                     "label": "Explore regional variations"}
+    elif "region" in topic or "country" in topic or "where" in topic or "location" in topic:
+        follow_ups = [
+            {"question": "How is Bano played specifically in Kenya?", "label": "Kenyan style"},
+            {"question": "How does Bano differ in Tanzania?", "label": "Tanzanian variations"},
+            {"question": "Has Bano spread beyond East Africa?", "label": "Global reach"}
+        ]
+        # Suggest a new topic - stories
+        new_topic = {"question": "Do you know any stories or memories people have about playing Bano?",
+                     "label": "Discover Bano stories"}
+    elif "story" in topic or "memory" in topic or "experience" in topic:
+        follow_ups = [
+            {"question": "Are there any famous Bano players?", "label": "Famous players"},
+            {"question": "Are there Bano tournaments or competitions?", "label": "Tournaments"},
+            {"question": "Can you share a story about a memorable Bano game?", "label": "Memorable games"}
+        ]
+        # Suggest a new topic - gameplay
+        new_topic = {"question": "Can you explain how to play Bano, step by step?", "label": "Learn gameplay basics"}
+    else:
+        # Default follow-ups for general questions
+        follow_ups = [
+            {"question": "Can you explain the basic rules of Bano?", "label": "Basic rules"},
+            {"question": "Why is Bano so popular in East Africa?", "label": "Popularity reasons"},
+            {"question": "How can I learn to play Bano well?", "label": "Learning tips"}
+        ]
+        # Default new topic suggestion
+        new_topic = {"question": "What's the history behind the game of Bano?", "label": "Explore Bano's history"}
+
+    # Create action buttons for related follow-ups
+    actions = [
+        cl.Action(
+            name="dynamic_suggestion",
+            payload={"question": item["question"]},
+            label=item["label"]
+        )
+        for item in follow_ups
+    ]
+
+    # Add the new topic suggestion with a special styling or indicator
+    new_topic_action = cl.Action(
+        name="new_topic_suggestion",
+        payload={"question": new_topic["question"]},
+        label="🔄 " + new_topic["label"] + " 🔄"  # Adding special emoji indicators
+    )
+
+    # Send follow-up suggestions with the new topic option
+    await cl.Message(content="Would you like to learn more about:", actions=actions).send()
+
+    # Send new topic suggestion as a separate message
+    await cl.Message(content="Or explore a new topic:", actions=[new_topic_action]).send()
 
 
 @cl.on_message
@@ -122,8 +334,11 @@ async def on_message(message: cl.Message):
 
         await res.send()
 
+        # Update memory
+        memory.chat_memory.add_user_message(message.content)
+        memory.chat_memory.add_ai_message(res.content)
+
         # Generate contextual follow-up suggestions based on the topic
-        # This is a more reliable approach than trying to generate them with the LLM
         topic = message.content.lower()
 
         # Determine appropriate follow-up questions based on the conversation context
@@ -169,12 +384,99 @@ async def on_message(message: cl.Message):
             for item in follow_ups
         ]
 
+        # Add a quiz button
+        actions.append(
+            cl.Action(
+                name="quiz_request",
+                payload={"topic": topic},
+                label="💡 Test your knowledge!"
+            )
+        )
+
         # Send follow-up suggestions as a separate message
         await cl.Message(content="Would you like to know more about:", actions=actions).send()
 
-        # Update memory
-        memory.chat_memory.add_user_message(message.content)
-        memory.chat_memory.add_ai_message(res.content)
+
+# Quiz functionality
+@cl.action_callback("quiz_request")
+async def on_quiz_request(action):
+    """Handle request for a quiz question"""
+    topic = action.payload.get("topic", "")
+
+    # Store the topic for later use
+    cl.user_session.set("quiz_topic", topic)
+
+    # Select 3 relevant quiz questions
+    questions = await select_relevant_quiz_questions(topic, count=3)
+    if questions:
+        # Store the quiz questions and initialize quiz state
+        cl.user_session.set("quiz_questions", questions)
+        cl.user_session.set("current_quiz_question", 0)
+        cl.user_session.set("quiz_score", 0)
+
+        # Start the quiz with the first question
+        await cl.Message(
+            content=f"🎮 **Let's test your Bano knowledge with 3 questions about {get_topic_description(topic)}!** 🎮").send()
+        await send_quiz_question(questions[0])
+    else:
+        await cl.Message(content="Sorry, I don't have any quiz questions prepared for this topic yet.").send()
+
+
+@cl.action_callback("quiz_answer")
+async def on_quiz_answer(action):
+    """Handle quiz answer selection"""
+    question = action.payload.get("question", "")
+    selected_index = action.payload.get("selected_index", -1)
+    correct_index = action.payload.get("correct_index", -1)
+    topic = cl.user_session.get("quiz_topic", "")
+
+    # Retrieve quiz state
+    quiz_questions = cl.user_session.get("quiz_questions", [])
+    current_question_index = cl.user_session.get("current_quiz_question", 0)
+    quiz_score = cl.user_session.get("quiz_score", 0)
+
+    # Check if answer is correct
+    is_correct = selected_index == correct_index
+
+    # Update score if correct
+    if is_correct:
+        quiz_score += 1
+        cl.user_session.set("quiz_score", quiz_score)
+        await cl.Message(content=f"✅ Correct! Great job! 🎉").send()
+    else:
+        # Get correct option text
+        correct_option = QUIZ_QUESTIONS[0]["options"][correct_index]  # Fallback
+        for q in QUIZ_QUESTIONS:
+            if q["question"] == question:
+                correct_option = q["options"][correct_index]
+                break
+
+        await cl.Message(content=f"❌ Not quite! The correct answer is: **{correct_option}**").send()
+
+    # Move to next question or finish quiz
+    current_question_index += 1
+    cl.user_session.set("current_quiz_question", current_question_index)
+
+    # Check if we have more questions
+    if current_question_index < len(quiz_questions) and current_question_index < 3:
+        # Send next question
+        await send_quiz_question(quiz_questions[current_question_index])
+    else:
+        # Quiz complete - show final score
+        await cl.Message(
+            content=f"🏆 **Quiz Complete!** 🏆\n\nYour score: **{quiz_score}/{min(len(quiz_questions), 3)}**\n\nWell done! Keep learning about Bano! 🎮").send()
+
+        # After quiz is complete, show relevant follow-up suggestions again
+        await send_suggestions_after_quiz(topic)
+
+
+# New topic suggestion callback
+@cl.action_callback("new_topic_suggestion")
+async def on_new_topic_suggestion(action):
+    """Handle clicks on new topic suggestions"""
+    question = action.payload.get("question", "")
+    if question:
+        await on_message(cl.Message(content=question))
 
 
 # Static action callbacks for initial buttons
