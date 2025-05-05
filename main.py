@@ -6,6 +6,11 @@ from langchain_core.runnables import RunnableConfig
 from agent import setup_runnable
 from auth import setup_memory, restore_memory
 
+# Store image paths for cultural and rules images
+CULTURAL_IMAGE_PATH = "bano_cultural.jpeg"  # Image 1: Children playing Bano
+RULES_IMAGE_PATH = "bano_rules.jpeg"  # Image 2: Illustrated Bano rules
+OPENER_IMAGE_PATH = "opener.jpg"  # Opener image
+
 # Quiz questions database
 QUIZ_QUESTIONS = [
     {
@@ -70,23 +75,33 @@ QUIZ_QUESTIONS = [
 
 
 def get_topic_description(topic):
-    """Get a friendly description of the topic for the quiz introduction"""
+    """Get a friendly description of the topic for the quiz introduction and appropriate image"""
     topic_lower = topic.lower()
 
+    # Default is no image
+    image_path = None
+
     if "play" in topic_lower or "rules" in topic_lower or "how to" in topic_lower:
-        return "Bano gameplay and rules"
+        description = "Bano gameplay and rules"
+        image_path = RULES_IMAGE_PATH
     elif "history" in topic_lower or "origin" in topic_lower:
-        return "the history of Bano"
+        description = "the history of Bano"
     elif "region" in topic_lower or "country" in topic_lower or "where" in topic_lower:
-        return "where Bano is played"
+        description = "where Bano is played"
+        image_path = CULTURAL_IMAGE_PATH
     elif "story" in topic_lower or "memory" in topic_lower or "experience" in topic_lower:
-        return "Bano stories and experiences"
+        description = "Bano stories and experiences"
+        image_path = CULTURAL_IMAGE_PATH
     elif "strategy" in topic_lower or "technique" in topic_lower or "winning" in topic_lower:
-        return "Bano strategies and techniques"
+        description = "Bano strategies and techniques"
+        image_path = RULES_IMAGE_PATH
     elif "culture" in topic_lower or "tradition" in topic_lower:
-        return "the cultural significance of Bano"
+        description = "the cultural significance of Bano"
+        image_path = CULTURAL_IMAGE_PATH
     else:
-        return "Bano"
+        description = "Bano"
+
+    return description, image_path
 
 
 async def select_relevant_quiz_questions(topic, count=3):
@@ -127,9 +142,7 @@ async def select_relevant_quiz_questions(topic, count=3):
 
 @cl.on_chat_start
 async def on_chat_start():
-    from chainlit import Image, Message
-
-    # Dynamic greeting based on time
+    # First message - greeting and introduction
     hour = datetime.now().hour
     if hour < 12:
         greeting = "Good morning"
@@ -138,20 +151,35 @@ async def on_chat_start():
     else:
         greeting = "Good evening"
 
-    # First message - greeting and introduction
     intro_text = (
         f"{greeting}! 👋🏽\n\n"
         "I'm *Simba*, your Bano buddy. I'm here to help you explore the exciting world of Bano! 🟢🎯\n"
         "Before we get started, may I know your name?"
     )
 
-    # Send introduction without the image first
-    await Message(content=intro_text).send()
+    # Send introduction
+    await cl.Message(content=intro_text).send()
+
+    # Create image objects and store them in user session
+    # This ensures they're properly initialized when we need them
+    try:
+        opener_image = cl.Image(path=OPENER_IMAGE_PATH, name="opener", display="inline")
+        cultural_image = cl.Image(path=CULTURAL_IMAGE_PATH, name="bano_cultural", display="inline")
+        rules_image = cl.Image(path=RULES_IMAGE_PATH, name="bano_rules", display="inline")
+
+        # Store images in user session
+        cl.user_session.set("opener_image", opener_image)
+        cl.user_session.set("cultural_image", cultural_image)
+        cl.user_session.set("rules_image", rules_image)
+    except Exception as e:
+        # Handle image loading errors gracefully
+        print(f"Error loading images: {e}")
+        await cl.Message(content="Note: Some images might not display correctly.").send()
 
     # Set flag in user session to indicate we're waiting for the name
     cl.user_session.set("waiting_for_name", True)
 
-    # The rest of the setup will happen after we get the name
+    # Setup memory and runnable
     setup_memory()
     setup_runnable()
 
@@ -250,10 +278,12 @@ async def send_suggestions_after_quiz(topic):
     )
 
     # Send follow-up suggestions with the new topic option
-    await cl.Message(content="Would you like to learn more about:", actions=actions).send()
+    suggestion_msg = cl.Message(content="Would you like to learn more about:", actions=actions)
+    await suggestion_msg.send()
 
     # Send new topic suggestion as a separate message
-    await cl.Message(content="Or explore a new topic:", actions=[new_topic_action]).send()
+    new_topic_msg = cl.Message(content="Or explore a new topic:", actions=[new_topic_action])
+    await new_topic_msg.send()
 
 
 @cl.on_message
@@ -267,9 +297,8 @@ async def on_message(message: cl.Message):
         cl.user_session.set("user_name", user_name)
         cl.user_session.set("waiting_for_name", False)
 
-        # Load opener image now
-        from chainlit import Image
-        image = Image(path="opener.jpg", name="image1", display="inline")
+        # Get the opener image from user session
+        opener_image = cl.user_session.get("opener_image")
 
         # Welcome message with image and personalized greeting
         welcome_text = (
@@ -277,7 +306,13 @@ async def on_message(message: cl.Message):
             "Ready to dive into some nostalgic fun?\n"
             "You can ask me anything, or pick one of these to get started!👇"
         )
-        await cl.Message(content=welcome_text, elements=[image]).send()
+
+        # Send with image if available
+        if opener_image:
+            # FIXED: Include elements when creating the message, not when sending
+            await cl.Message(content=welcome_text, elements=[opener_image]).send()
+        else:
+            await cl.Message(content=welcome_text).send()
 
         # Initial suggested questions
         actions = [
@@ -308,7 +343,9 @@ async def on_message(message: cl.Message):
             )
         ]
 
-        await cl.Message(content="Here are some ideas you can click on:", actions=actions).send()
+        # Send message with actions
+        suggestion_msg = cl.Message(content="Here are some ideas you can click on:", actions=actions)
+        await suggestion_msg.send()
 
     else:
         # Normal message handling
@@ -332,16 +369,34 @@ async def on_message(message: cl.Message):
         ):
             await res.stream_token(chunk)
 
+        # Send the response without images first
         await res.send()
+
+        # Check if we should show an image based on the topic
+        topic = message.content.lower()
+        description, image_path = get_topic_description(topic)
+
+        # Get appropriate image from user session based on topic
+        topic_image = None
+        if image_path == CULTURAL_IMAGE_PATH:
+            topic_image = cl.user_session.get("cultural_image")
+        elif image_path == RULES_IMAGE_PATH:
+            topic_image = cl.user_session.get("rules_image")
+
+        # If we have a relevant image, send it as a separate message
+        if topic_image:
+            # FIXED: Create the message with elements included
+            image_message = cl.Message(
+                content=f"Here's a visual to help you understand {description}:",
+                elements=[topic_image]
+            )
+            await image_message.send()  # No elements parameter here
 
         # Update memory
         memory.chat_memory.add_user_message(message.content)
         memory.chat_memory.add_ai_message(res.content)
 
-        # Generate contextual follow-up suggestions based on the topic
-        topic = message.content.lower()
-
-        # Determine appropriate follow-up questions based on the conversation context
+        # Generate follow-up suggestions based on the conversation context
         if "play" in topic or "rules" in topic or "how to" in topic:
             follow_ups = [
                 {"question": "What are some winning strategies for Bano?", "label": "Winning strategies?"},
@@ -374,7 +429,7 @@ async def on_message(message: cl.Message):
                 {"question": "How can I learn to play Bano well?", "label": "Learning tips"}
             ]
 
-        # Create action buttons with the simplified approach
+        # Create action buttons
         actions = [
             cl.Action(
                 name="dynamic_suggestion",
@@ -393,11 +448,12 @@ async def on_message(message: cl.Message):
             )
         )
 
-        # Send follow-up suggestions as a separate message
-        await cl.Message(content="Would you like to know more about:", actions=actions).send()
+        # Send follow-up suggestions as a separate message - ensure it has actions
+        suggestion_msg = cl.Message(content="Would you like to know more about:", actions=actions)
+        await suggestion_msg.send()
 
 
-# Quiz functionality
+# Quiz functionality with image support
 @cl.action_callback("quiz_request")
 async def on_quiz_request(action):
     """Handle request for a quiz question"""
@@ -414,9 +470,29 @@ async def on_quiz_request(action):
         cl.user_session.set("current_quiz_question", 0)
         cl.user_session.set("quiz_score", 0)
 
+        # Determine if an image is appropriate for this quiz topic
+        description, image_path = get_topic_description(topic)
+
+        # Get appropriate image from user session based on topic
+        topic_image = None
+        if image_path == CULTURAL_IMAGE_PATH:
+            topic_image = cl.user_session.get("cultural_image")
+        elif image_path == RULES_IMAGE_PATH:
+            topic_image = cl.user_session.get("rules_image")
+
         # Start the quiz with the first question
-        await cl.Message(
-            content=f"🎮 **Let's test your Bano knowledge with 3 questions about {get_topic_description(topic)}!** 🎮").send()
+        # FIXED: Create message with elements included if image is available
+        if topic_image:
+            quiz_intro = cl.Message(
+                content=f"🎮 **Let's test your Bano knowledge with 3 questions about {description}!** 🎮",
+                elements=[topic_image]
+            )
+        else:
+            quiz_intro = cl.Message(
+                content=f"🎮 **Let's test your Bano knowledge with 3 questions about {description}!** 🎮"
+            )
+
+        await quiz_intro.send()
         await send_quiz_question(questions[0])
     else:
         await cl.Message(content="Sorry, I don't have any quiz questions prepared for this topic yet.").send()
