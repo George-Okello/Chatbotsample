@@ -9,11 +9,12 @@ from agent import LEARNING_LEVELS, CULTURAL_CONTEXTS, ACTIVITY_COMPONENTS
 from agent import adapt_content_to_level, identify_proximal_development_needs
 from auth import setup_memory, restore_memory
 
-# Store image paths for all images
+# Store image and video paths for all media assets
 CULTURAL_IMAGE_PATH = "bano_cultural.jpeg"  # Image 1: Children playing Bano
 RULES_IMAGE_PATH = "bano_rules.jpeg"  # Image 2: Illustrated Bano rules
 HISTORY_IMAGE_PATH = "bano_history.jpeg"  # Image 3: Historical context of Bano
 OPENER_IMAGE_PATH = "opener.jpg"  # Opener image
+GAMEPLAY_VIDEO_PATH = "gameplay.mp4"  # Gameplay video
 
 # Quiz questions database - Enhanced with CHAT framework components
 QUIZ_QUESTIONS = [
@@ -69,27 +70,27 @@ QUIZ_QUESTIONS = [
     }
 ]
 
-# CHAT Framework: Reflection questions to encourage higher-order thinking
+# CHAT Framework: Reflection questions - more conversational
 REFLECTION_QUESTIONS = {
     "novice": [
         "How does Bano compare to games you've played before?",
-        "What was your favorite part about learning Bano?",
-        "How would you explain Bano to a friend?",
+        "What's the coolest thing about Bano so far?",
+        "If you were explaining Bano to a friend, how would you describe it?",
     ],
     "beginner": [
-        "How might playing Bano help children develop skills?",
-        "What similarities do you see between Bano and other cultural games?",
-        "How do you think the environment affects how Bano is played?",
+        "What skills do you think kids develop by playing Bano?",
+        "Have you seen games like this in your own culture?",
+        "How do you think where you play affects the game?",
     ],
     "intermediate": [
-        "How does Bano reflect the values of the communities that play it?",
-        "In what ways might modern technology change how Bano is played or taught?",
-        "How does Bano connect generations within a community?",
+        "Why do you think Bano is so important in African communities?",
+        "How might phones and tablets be changing games like Bano?",
+        "What makes Bano a good way to connect different generations?",
     ],
     "advanced": [
-        "How has Bano evolved as a cultural activity system over time?",
-        "What contradictions exist between traditional Bano play and modern adaptations?",
-        "How could Bano be used as an educational tool beyond game strategies?",
+        "How has Bano adapted and survived over generations?",
+        "What tensions exist between traditional play and modern life?",
+        "Could Bano teach us things beyond just game strategy?",
     ]
 }
 
@@ -176,24 +177,24 @@ async def select_relevant_quiz_questions(topic, count=3, user_level="novice"):
 
 
 async def send_quiz_question(question_data):
-    """Send a single quiz question with option buttons"""
+    """Send a single quiz question with option buttons - more conversational style"""
     # Get current question number
     current_question = cl.user_session.get("current_quiz_question", 0)
 
     # CHAT Framework: Identify which activity component this question relates to
     activity_component = question_data.get("activity_component", "rules")
-    component_description = ""
+    component_hint = ""
 
     if activity_component == "tools":
-        component_description = "(This question relates to the tools used in Bano)"
+        component_hint = "Hint: Think about the materials used! 🧰"
     elif activity_component == "rules":
-        component_description = "(This question relates to the rules that structure Bano gameplay)"
+        component_hint = "Hint: This is about the game rules! 📏"
     elif activity_component == "community":
-        component_description = "(This question relates to the community context of Bano)"
+        component_hint = "Hint: Consider the social side of Bano! 👥"
     elif activity_component == "division_of_labor":
-        component_description = "(This question relates to roles within the Bano activity system)"
+        component_hint = "Hint: Think about different player roles! 🎭"
     elif activity_component == "object":
-        component_description = "(This question relates to the goals and outcomes of Bano)"
+        component_hint = "Hint: What's the goal of playing Bano? 🎯"
 
     # Create option buttons
     actions = [
@@ -207,9 +208,11 @@ async def send_quiz_question(question_data):
         ) for i, option in enumerate(question_data["options"])
     ]
 
-    # Send the question with question number and activity component context
+    # Send the question with a more conversational style
+    question_text = f"**Quick Quiz Question {current_question + 1}!** 🤔\n\n{question_data['question']}\n\n{component_hint}"
+
     await cl.Message(
-        content=f"🎮 **Question {current_question + 1}/3** 🎮\n\n{question_data['question']}\n\n{component_description}",
+        content=question_text,
         actions=actions
     ).send()
 
@@ -219,6 +222,7 @@ async def send_reflection_question(topic):
     # Get user profile
     user_profile = cl.user_session.get("user_profile", {"learning_level": "novice"})
     user_level = user_profile["learning_level"]
+    user_name = cl.user_session.get("user_name", "friend")
 
     # Get appropriate reflection questions for this level
     level_questions = REFLECTION_QUESTIONS.get(user_level, REFLECTION_QUESTIONS["novice"])
@@ -227,9 +231,9 @@ async def send_reflection_question(topic):
     import random
     reflection_question = random.choice(level_questions)
 
-    # Send as a message with a textbox for response
+    # Send as a message with a more conversational tone
     await cl.Message(
-        content=f"🤔 **Reflection Question** 🤔\n\n{reflection_question}\n\n(Type your thoughts below)",
+        content=f"Hey {user_name}, I'm curious... 🤔\n\n{reflection_question}\n\n(Just type whatever comes to mind - no pressure! 😊)",
     ).send()
 
     # Track that we're waiting for reflection
@@ -238,81 +242,62 @@ async def send_reflection_question(topic):
 
 
 async def send_follow_up_suggestions(topic):
-    """Send follow-up suggestions based on the topic using CHAT framework"""
+    """Send follow-up suggestions based on the topic using CHAT framework - more conversational"""
     # Get user profile
     user_profile = cl.user_session.get("user_profile", {"learning_level": "novice"})
     user_level = user_profile["learning_level"]
 
-    # CHAT Framework: Integration of activity system components
-    # For each topic, consider different aspects of the activity system
-
+    # CHAT Framework: Integration of activity system components - simplified for conversation
     if "play" in topic or "rules" in topic or "how to" in topic:
-        # TOOLS and RULES focus
         follow_ups = [
-            {"question": "What are some winning strategies for Bano?",
-             "label": "Winning strategies",
+            {"question": "Any good tricks for winning at Bano?",
+             "label": "Winning tips",
              "activity_component": "rules"},
-            {"question": "Are there different variations of Bano?",
+            {"question": "Are there different ways to play Bano?",
              "label": "Game variations",
              "activity_component": "rules"},
-            {"question": "What materials are traditionally used as game pieces in Bano?",
-             "label": "Traditional materials",
+            {"question": "What stuff do you need to play?",
+             "label": "Game materials",
              "activity_component": "tools"}
         ]
     elif "history" in topic or "origin" in topic or "past" in topic:
-        # HISTORICAL DEVELOPMENT focus
         follow_ups = [
-            {"question": "What cultural significance does Bano have in different communities?",
-             "label": "Cultural significance",
+            {"question": "Why is Bano important to communities?",
+             "label": "Cultural impact",
              "activity_component": "community"},
-            {"question": "How has Bano evolved from earlier traditional games?",
-             "label": "Historical evolution",
+            {"question": "How's Bano changed over the years?",
+             "label": "Game evolution",
              "activity_component": "historical_development"},
-            {"question": "What similar games exist across different cultures?",
-             "label": "Cultural similarities",
+            {"question": "Any games similar to Bano?",
+             "label": "Similar games",
              "activity_component": "historical_development"}
         ]
     elif "region" in topic or "country" in topic or "where" in topic:
-        # COMMUNITY focus
         follow_ups = [
-            {"question": "How is Bano integrated into daily life in Kenya?",
-             "label": "Kenyan cultural context",
+            {"question": "How do Kenyans play Bano?",
+             "label": "Kenya style",
              "activity_component": "community"},
-            {"question": "How do the rules of Bano vary across different regions?",
-             "label": "Regional rule variations",
+            {"question": "Different rules in different places?",
+             "label": "Regional differences",
              "activity_component": "rules"},
-            {"question": "How has globalization affected the spread of Bano?",
-             "label": "Global influences",
-             "activity_component": "community"}
-        ]
-    elif "story" in topic or "memory" in topic or "experience" in topic:
-        # SUBJECTS and COMMUNITY focus
-        follow_ups = [
-            {"question": "How do Bano stories get passed down between generations?",
-             "label": "Intergenerational learning",
-             "activity_component": "division_of_labor"},
-            {"question": "Are there any famous Bano players or tournaments?",
-             "label": "Notable players",
-             "activity_component": "subject"},
-            {"question": "How does Bano connect people within communities?",
-             "label": "Community bonds",
+            {"question": "How's Bano spreading around the world?",
+             "label": "Global reach",
              "activity_component": "community"}
         ]
     else:
-        # Default: Balance across activity system
         follow_ups = [
-            {"question": "Can you explain the basic rules of Bano?",
+            {"question": "How exactly do you play Bano?",
              "label": "Basic rules",
              "activity_component": "rules"},
-            {"question": "What materials do you need to play Bano?",
-             "label": "Game materials",
+            {"question": "What do you need to play?",
+             "label": "Materials needed",
              "activity_component": "tools"},
-            {"question": "How do communities gather for Bano games?",
-             "label": "Social context",
+            {"question": "Is Bano fun for groups?",
+             "label": "Social play",
              "activity_component": "community"}
         ]
 
-    # Create action buttons with activity system component indicators
+    # Create action buttons with conversational labels
     actions = [
         cl.Action(
             name="dynamic_suggestion",
@@ -323,17 +308,20 @@ async def send_follow_up_suggestions(topic):
         for item in follow_ups
     ]
 
-    # Add a quiz button with adaptive difficulty based on user level
+    # Add a quiz button with casual language
     actions.append(
         cl.Action(
             name="quiz_request",
             payload={"topic": topic, "level": user_profile["learning_level"]},
-            label="💡 Test your Bano knowledge!"
+            label="Quick quiz?"
         )
     )
 
-    # Send follow-up suggestions as a separate message
-    suggestion_msg = cl.Message(content="Would you like to know more about:", actions=actions)
+    # Send follow-up suggestions with conversational intro
+    suggestion_msg = cl.Message(
+        content="Want to chat about:",
+        actions=actions
+    )
     await suggestion_msg.send()
 
 
@@ -352,19 +340,19 @@ async def on_chat_start():
     # Store user profile in session
     cl.user_session.set("user_profile", user_profile)
 
-    # First message - greeting and introduction
+    # First message - more casual greeting
     hour = datetime.now().hour
     if hour < 12:
-        greeting = "Good morning"
+        greeting = "Morning"
     elif hour < 18:
-        greeting = "Good afternoon"
+        greeting = "Hey"
     else:
-        greeting = "Good evening"
+        greeting = "Evening"
 
     intro_text = (
-        f"{greeting}! 👋🏽\n\n"
-        "I'm *Simba*, your Bano buddy. I'm here to help you explore the exciting world of Bano! 🟢🎯\n"
-        "Before we get started, may I know your name?"
+        f"{greeting}! 👋\n\n"
+        "I'm *Simba*, and I'm all about Bano! 🪙\n"
+        "What's your name? I'd love to chat about this awesome game!"
     )
 
     # Send introduction
@@ -376,16 +364,18 @@ async def on_chat_start():
         cultural_image = cl.Image(path=CULTURAL_IMAGE_PATH, name="bano_cultural", display="inline")
         rules_image = cl.Image(path=RULES_IMAGE_PATH, name="bano_rules", display="inline")
         history_image = cl.Image(path=HISTORY_IMAGE_PATH, name="bano_history", display="inline")
+        gameplay_video = cl.Video(path=GAMEPLAY_VIDEO_PATH, name="bano_gameplay", display="inline")
 
-        # Store images in user session
+        # Store media in user session
         cl.user_session.set("opener_image", opener_image)
         cl.user_session.set("cultural_image", cultural_image)
         cl.user_session.set("rules_image", rules_image)
         cl.user_session.set("history_image", history_image)
+        cl.user_session.set("gameplay_video", gameplay_video)
     except Exception as e:
         # Handle image loading errors gracefully
         print(f"Error loading images: {e}")
-        await cl.Message(content="Note: Some images might not display correctly.").send()
+        await cl.Message(content="(Some visuals might not load, but we can still chat! 😊)").send()
 
     # Set flag in user session to indicate we're waiting for the name
     cl.user_session.set("waiting_for_name", True)
@@ -412,6 +402,14 @@ async def on_chat_resume(thread: cl.types.ThreadDict):
         }
         cl.user_session.set("user_profile", user_profile)
 
+    # Restore video in session if needed
+    try:
+        if not cl.user_session.get("gameplay_video"):
+            gameplay_video = cl.Video(path=GAMEPLAY_VIDEO_PATH, name="bano_gameplay", display="inline")
+            cl.user_session.set("gameplay_video", gameplay_video)
+    except Exception as e:
+        print(f"Error restoring video: {e}")
+
 
 @cl.on_message
 async def on_message(message: cl.Message):
@@ -425,60 +423,67 @@ async def on_message(message: cl.Message):
         cl.user_session.set("user_name", user_name)
         cl.user_session.set("waiting_for_name", False)
 
-        # Get the opener image from user session
+        # Get the opener image and gameplay video from user session
         opener_image = cl.user_session.get("opener_image")
+        gameplay_video = cl.user_session.get("gameplay_video")
 
-        # Welcome message with personalized greeting
+        # More casual welcome message
         welcome_text = (
-            f"Nice to meet you, {user_name}! Welcome to the world of *Bano*! 🟢🎯\n\n"
-            "Ready to dive into some nostalgic fun?\n"
-            "You can ask me anything, or pick one of these to get started!👇"
+            f"Nice to meet you, {user_name}! 🙌\n\n"
+            "Check out this video to see Bano in action! 🎥\n"
+            "What would you like to know? Pick something below or just ask me anything! 😊"
         )
 
-        # Send welcome message with image if available
+        # Send welcome message with image and video if available
+        elements = []
         if opener_image:
-            welcome_msg = cl.Message(content=welcome_text, elements=[opener_image])
+            elements.append(opener_image)
+        if gameplay_video:
+            elements.append(gameplay_video)
+
+        if elements:
+            welcome_msg = cl.Message(content=welcome_text, elements=elements)
         else:
             welcome_msg = cl.Message(content=welcome_text)
 
         await welcome_msg.send()
 
-        # CHAT Framework: Initial suggested questions cover different aspects of the activity system
+        # CHAT Framework: Initial suggested questions - more casual
         actions = [
             cl.Action(
                 name="dynamic_suggestion",
-                payload={"question": "Can you explain how to play Bano, step by step?",
+                payload={"question": "How do you actually play Bano?",
                          "activity_component": "rules"},
-                label="📏 How is Bano played?"
+                label="How to play? 🎯"
             ),
             cl.Action(
                 name="dynamic_suggestion",
-                payload={"question": "What materials are traditionally used to play Bano?",
+                payload={"question": "What stuff do you need for Bano?",
                          "activity_component": "tools"},
-                label="🧰 What materials are used?"
+                label="What do you need? 🛠️"
             ),
             cl.Action(
                 name="dynamic_suggestion",
-                payload={"question": "How does Bano bring communities together?",
+                payload={"question": "Why do kids love playing Bano together?",
                          "activity_component": "community"},
-                label="👥 Social aspects of Bano"
+                label="Why's it fun? 😄"
             ),
             cl.Action(
                 name="dynamic_suggestion",
-                payload={"question": "How has Bano evolved throughout history?",
+                payload={"question": "Where did Bano come from?",
                          "activity_component": "historical_development"},
-                label="📜 Historical development"
+                label="The backstory? 📚"
             ),
             cl.Action(
                 name="dynamic_suggestion",
-                payload={"question": "What skills does playing Bano help develop?",
+                payload={"question": "What do you learn from playing Bano?",
                          "activity_component": "object"},
-                label="🎯 Skills and outcomes"
+                label="What skills? 🎓"
             )
         ]
 
         # Send message with actions
-        suggestion_msg = cl.Message(content="Here are some aspects of Bano you can explore:", actions=actions)
+        suggestion_msg = cl.Message(content="What interests you?", actions=actions)
         await suggestion_msg.send()
 
     elif waiting_for_reflection:
@@ -500,19 +505,19 @@ async def on_message(message: cl.Message):
         cl.user_session.set("user_profile", user_profile)
         cl.user_session.set("waiting_for_reflection", False)
 
-        # CHAT Framework: Acknowledge reflection and provide feedback
+        # CHAT Framework: Acknowledge reflection casually
         await cl.Message(
-            content="Thank you for sharing your reflection! 🌟\n\nThinking about Bano in this way helps deepen understanding of both the game and its cultural significance. Let's continue exploring!"
+            content="Thanks for sharing! 😊 Really interesting perspective.\n\nWhat else would you like to know about Bano?"
         ).send()
 
-        # Redirect to regular conversation flow
-        await on_message(cl.Message(content="Let's continue our Bano discussion"))
+        # Continue conversation naturally
+        await send_follow_up_suggestions("general")
 
     else:
         # Normal message handling
         memory = cl.user_session.get("memory")
         runnable = cl.user_session.get("runnable")
-        user_name = cl.user_session.get("user_name", "there")  # Default fallback
+        user_name = cl.user_session.get("user_name", "friend")  # Default fallback
 
         # CHAT Framework: Update user profile based on interaction
         # Get current user profile
@@ -558,8 +563,7 @@ async def on_message(message: cl.Message):
         # Apply the adaptation
         adapted_content = adapt_content_to_level(final_content, user_profile["learning_level"])
 
-        # Instead of updating the existing message (which causes the error),
-        # we'll send a new message with the adapted content
+        # Send the response
         await res.send()
 
         # Check if we should show an image based on the topic
@@ -575,13 +579,26 @@ async def on_message(message: cl.Message):
         elif image_path == HISTORY_IMAGE_PATH:
             topic_image = cl.user_session.get("history_image")
 
-        # If we have a relevant image, send it as a separate message
+        # If we have a relevant image, send it casually
         if topic_image:
             image_message = cl.Message(
-                content=f"Here's a visual to help you understand {description}:",
+                content=f"Here, check this out:",
                 elements=[topic_image]
             )
             await image_message.send()
+
+        # Check if topic is related to gameplay and user hasn't seen the video yet
+        if ("play" in topic or "how to" in topic or "rules" in topic or "gameplay" in topic):
+            gameplay_video = cl.user_session.get("gameplay_video")
+            video_shown = cl.user_session.get("video_shown", False)
+
+            if gameplay_video and not video_shown:
+                video_message = cl.Message(
+                    content="You gotta see this video - shows exactly how it's played! 🎥",
+                    elements=[gameplay_video]
+                )
+                await video_message.send()
+                cl.user_session.set("video_shown", True)
 
         # Update memory
         memory.chat_memory.add_user_message(message.content)
@@ -640,32 +657,32 @@ async def on_quiz_request(action):
         elif image_path == HISTORY_IMAGE_PATH:
             topic_image = cl.user_session.get("history_image")
 
-        # CHAT Framework: Introduce quiz with appropriate scaffolding based on level
+        # CHAT Framework: Introduce quiz casually
         level_text = ""
         if quiz_level == "novice":
-            level_text = "These questions will help you start understanding the basics of Bano."
+            level_text = "Just some easy questions to start! 😊"
         elif quiz_level == "beginner":
-            level_text = "These questions will help reinforce your understanding of Bano fundamentals."
+            level_text = "Let's see what you know! 🤔"
         elif quiz_level == "intermediate":
-            level_text = "These questions will challenge your growing knowledge of Bano's complexity."
+            level_text = "Time for some trickier ones! 😎"
         elif quiz_level == "advanced":
-            level_text = "These questions will test your expert knowledge of Bano's nuances."
+            level_text = "Ready for the hard stuff? 💪"
 
-        # Start the quiz with the first question
+        # Start the quiz with a casual intro
         if topic_image:
             quiz_intro = cl.Message(
-                content=f"🎮 **Let's test your Bano knowledge with 3 questions about {description}!** 🎮\n\n{level_text}",
+                content=f"Alright, quick Bano quiz! 🎮\n\n{level_text}",
                 elements=[topic_image]
             )
         else:
             quiz_intro = cl.Message(
-                content=f"🎮 **Let's test your Bano knowledge with 3 questions about {description}!** 🎮\n\n{level_text}"
+                content=f"Let's test your Bano knowledge! 🎮\n\n{level_text}"
             )
 
         await quiz_intro.send()
         await send_quiz_question(questions[0])
     else:
-        await cl.Message(content="Sorry, I don't have any quiz questions prepared for this topic yet.").send()
+        await cl.Message(content="Hmm, no quiz questions ready for this topic yet. Ask me something else! 😅").send()
 
 
 @cl.action_callback("quiz_answer")
@@ -710,8 +727,8 @@ async def on_quiz_answer(action):
         quiz_score += 1
         cl.user_session.set("quiz_score", quiz_score)
 
-        # Provide encouraging feedback
-        await cl.Message(content=f"✅ Correct! Great job! 🎉").send()
+        # Provide encouraging feedback casually
+        await cl.Message(content=f"Yes! Nailed it! 🎯").send()
     else:
         # Get correct option text
         correct_option = "Unknown"  # Default
@@ -720,8 +737,8 @@ async def on_quiz_answer(action):
                 correct_option = q["options"][correct_index]
                 break
 
-        # Provide constructive feedback
-        await cl.Message(content=f"❌ Not quite! The correct answer is: **{correct_option}**").send()
+        # Provide casual constructive feedback
+        await cl.Message(content=f"Ah, close! It's actually **{correct_option}** 😅").send()
 
     # Move to next question or finish quiz
     current_question_index += 1
@@ -732,26 +749,27 @@ async def on_quiz_answer(action):
         # Send next question
         await send_quiz_question(quiz_questions[current_question_index])
     else:
-        # Quiz complete - show final score with adaptive feedback
+        # Quiz complete - show score casually
         score_percentage = quiz_score / min(len(quiz_questions), 3) * 100
 
-        # CHAT Framework: Provide adaptive summary based on score
+        # CHAT Framework: Provide adaptive feedback casually
         if score_percentage >= 80:
-            feedback = "Excellent work! You're demonstrating a strong understanding of Bano!"
+            feedback = "You're pretty good at this! 🌟"
         elif score_percentage >= 50:
-            feedback = "Good effort! You're building your Bano knowledge well."
+            feedback = "Not bad at all! Getting the hang of it 👍"
         else:
-            feedback = "Keep learning! Bano has many aspects to explore."
+            feedback = "Hey, we all start somewhere! 😊"
 
-        # Send quiz completion message
+        # Send quiz completion message casually
         await cl.Message(
-            content=f"🏆 **Quiz Complete!** 🏆\n\nYour score: **{quiz_score}/{min(len(quiz_questions), 3)}**\n\n{feedback}").send()
+            content=f"Quiz done! You got {quiz_score}/{min(len(quiz_questions), 3)} 🏆\n\n{feedback}").send()
 
         # After quiz is complete, show relevant follow-up suggestions again
         await send_follow_up_suggestions(topic)
 
-        # CHAT Framework: Add reflection question after quiz
-        await send_reflection_question(topic)
+        # CHAT Framework: Add casual reflection question after quiz
+        if quiz_score > 0:  # Only ask reflection if they got at least one right
+            await send_reflection_question(topic)
 
 
 @cl.action_callback("reflection_request")
@@ -775,6 +793,35 @@ async def on_dynamic_suggestion_action(action):
         user_profile = cl.user_session.get("user_profile", {})
         user_profile["activity_focus"] = activity_component
         cl.user_session.set("user_profile", user_profile)
+
+        # Get appropriate image based on the question content and activity component
+        topic_image = None
+        if "rules" in question.lower() or "play" in question.lower() or "how" in question.lower():
+            topic_image = cl.user_session.get("rules_image")
+        elif "materials" in question.lower() or "stuff" in question.lower() or "need" in question.lower():
+            topic_image = cl.user_session.get("rules_image")
+        elif "together" in question.lower() or "love" in question.lower() or "fun" in question.lower():
+            topic_image = cl.user_session.get("cultural_image")
+        elif "come from" in question.lower() or "backstory" in question.lower() or "where did" in question.lower():
+            topic_image = cl.user_session.get("history_image")
+        elif "learn" in question.lower() or "skills" in question.lower():
+            topic_image = cl.user_session.get("cultural_image")
+
+        # Send the appropriate image first if available - casually
+        if topic_image:
+            image_topic = ""
+            if topic_image == cl.user_session.get("rules_image"):
+                image_topic = "the rules"
+            elif topic_image == cl.user_session.get("cultural_image"):
+                image_topic = "how people play it"
+            elif topic_image == cl.user_session.get("history_image"):
+                image_topic = "where Bano comes from"
+
+            image_message = cl.Message(
+                content=f"Here's a pic showing {image_topic}:",
+                elements=[topic_image]
+            )
+            await image_message.send()
 
         # Process the message
         await on_message(cl.Message(content=question))

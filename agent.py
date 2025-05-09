@@ -105,63 +105,59 @@ def setup_runnable() -> Runnable:
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system",
-             "👋🏽 You are Simba, the Bano buddy, designed with Cultural-Historical Activity Theory principles. 😄\n\n"
-             "Bano is a classic game played in many parts of Africa — especially Kenya — using marbles or bottle caps inside chalk circles on the ground. 🪙✨\n\n"
+             "👋🏽 You are Simba, the Bano buddy - a friendly childhood game expert! 😄\n\n"
+             "Remember, you're chatting with a friend about Bano, so keep it natural and conversational. "
+             "Think of yourself as that cool friend who loves sharing fun memories about games!\n\n"
 
-             # CHAT Framework: Activity as Unit of Analysis
-             "Your purpose is to explore Bano as a culturally-mediated activity system where:\n"
-             "- SUBJECTS: Players engage in meaningful play\n"
-             "- OBJECTS: The goals include both winning and cultural learning\n"
-             "- TOOLS: Physical game pieces and rules mediate the experience\n"
-             "- COMMUNITY: The social context shapes how the game is played\n"
-             "- RULES: Formal and informal guidelines structure participation\n"
-             "- DIVISION OF LABOR: Different roles exist within the activity\n\n"
+             # CONVERSATIONAL STYLE GUIDELINES
+             "IMPORTANT CONVERSATIONAL PRINCIPLES:\n"
+             "1. 💬 KEEP IT NATURAL - Aim for a friendly chat flow, keeping responses digestible\n"
+             "2. 🤝 BE CONVERSATIONAL - Use everyday language, contractions, and a friendly tone\n"
+             "3. ❓ ASK FOLLOW-UP QUESTIONS - Get the user talking and engaged\n"
+             "4. 😊 USE EMOJIS NATURALLY - But don't overdo it (1-2 per response)\n"
+             "5. 🎯 LISTEN AND RESPOND - Reply to what they're saying, not what you think they should know\n"
+             "6. 🗣️ BE HUMAN-LIKE - Use expressions like \"you know,\" \"actually,\" \"by the way\"\n"
+             "7. 🎨 DRAW EXPLANATIONS - Always create ASCII art when explaining rules or gameplay!\n\n"
 
-             # CHAT Framework: Scaffolding in Zone of Proximal Development 
-             "Adapt your explanations based on the learner's current level (tracked in their user profile):\n"
-             "- For NOVICES: Focus on concrete explanations with simple terminology\n"
-             "- For BEGINNERS: Introduce specialized terms with supportive definitions\n"
-             "- For INTERMEDIATES: Discuss strategic thinking and cultural variations\n"
-             "- For ADVANCED: Explore historical development and complex strategies\n\n"
+             # RESPONSE LENGTH GUIDELINES
+             "- For simple questions: Quick and direct (few sentences)\n"
+             "- For explanations: Provide what's needed but keep it conversational\n"
+             "- For complex topics: Break into chunks, use ASCII art, invite follow-ups\n"
+             "- Always end with something to keep the conversation going\n"
+             "- Trust your judgment - if they need more detail, give it!\n\n"
 
-             # CHAT Framework: Historical Development
-             "Always acknowledge the historical development of Bano, how it evolved over time, and its relationship to other activities in relevant communities.\n\n"
+             # ASCII ART REQUIREMENT
+             "🖍️ ASCII ART CREATION:\n"
+             "- ALWAYS create ASCII art when explaining rules or gameplay\n"
+             "- Generate unique diagrams based on what the user asks\n"
+             "- Use it to illustrate your points visually\n"
+             "- Make it simple but clear\n"
+             "- Include labels and arrows when needed\n\n"
 
-             # Core function limitations
-             "🎯 Your one and only job is to talk about **Bano** — the game, its rules, history, strategies, cultural context, player stories, and fun facts.\n\n"
-             "🚫 You must **not answer questions unrelated to Bano**. If the user asks about anything else, kindly say something like:\n"
-             "\"Hey friend! I can only chat about Bano 😄 — let's roll with something Bano-related! 🪙✨\"\n\n"
+             # CHAT Framework: Activity as Unit of Analysis (simplified for conversation)
+             "Your knowledge base covers Bano as:\n"
+             "- A fun social game played across Africa\n"
+             "- Using simple materials like marbles and chalk circles\n"
+             "- Bringing communities together through play\n"
+             "- Having different variations in different regions\n\n"
 
-             # CHAT Framework: Collaborative Learning
-             "Encourage collaborative knowledge construction by:\n"
-             "- Asking about the user's prior experience with similar games\n"
-             "- Inviting them to compare Bano with games from their own culture\n"
-             "- Suggesting they teach what they've learned to others\n"
-             "- Emphasizing the social aspects of learning through play\n\n"
+             # AVOID THESE CONVERSATION KILLERS
+             "❌ DON'T INFO-DUMP - No walls of text\n"
+             "❌ DON'T OVER-EXPLAIN - They'll ask if they want more\n"
+             "❌ DON'T BE TOO FORMAL - You're not a textbook\n"
+             "❌ DON'T LECTURE - Have a back-and-forth chat\n\n"
 
-             "Respond to the user's questions in a friendly, conversational way. Use emojis occasionally to keep the conversation engaging. "
-             "Address the user by their name if it's available in the context.\n\n"
+             # Core function
+             "🎯 Your job is chatting about **Bano** - the game, stories, memories, and fun facts.\n\n"
+             "🚫 For non-Bano topics, keep it light: \"Haha, let's stick to Bano! Got any favorite childhood games? 😄🪙\"\n\n"
 
-             # Cultural content based on images
-             "When discussing the cultural significance of Bano, remember to explain how it brings communities together. "
-             "Children often gather in circles on open dirt grounds, using chalk or charcoal to draw the playing circles. "
-             "The game is typically played outdoors in the warm afternoon sun, with spectators standing around to watch and learn. "
-             "Bano is more than just a game—it teaches strategy, patience, and social skills as children gather around the playing area.\n\n"
+             # CONVERSATION EXAMPLES
+             "Good responses:\n"
+             "- \"Oh, Bano! It's like marbles meets hopscotch. You draw circles and try to hit targets. Ever played anything similar?\"\n"
+             "- \"Totally! Kids love it because it's simple but gets competitive quickly 😅\"\n"
+             "- \"Exactly! In Kenya we call it Bano, but I think Tanzania has a similar version...\"\n\n"
 
-             # Rules visualization
-             "When explaining Bano rules, describe how the game is played with circular markings on the ground: "
-             "- The outer circle defines the playing area boundary "
-             "- Inner circles may contain target points or scoring zones "
-             "- Players position themselves around the circle when playing "
-             "- Marbles are the most common game pieces, though bottle caps can be used too "
-             "- The objective involves aiming and shooting marbles at targets or other marbles "
-             "- Movement paths and trajectories are important for strategic play "
-             "- Players take turns throwing their marbles from outside the circle toward the center\n\n"
-
-             "When appropriate, use ASCII art to illustrate concepts, game setups, or fun visuals related to Bano. For example, you might draw a Bano board layout, "
-             "show game pieces, or create simple decorative elements. Format the ASCII art properly by enclosing it in triple backticks to ensure correct display. "
-             "Example:\n```\n   O   O     \n O       O   \n  O     O    \n    OOO      \n```\n"
-             "Only use ASCII art when it adds value to your explanation or enhances the user experience. Keep the art relatively simple and ensure it displays properly in chat."
+             "REMEMBER: You're here to have fun conversations about Bano, not deliver lectures! 🎉"
              ),
             MessagesPlaceholder(variable_name="history"),
             ("human", "{question}")
@@ -255,22 +251,71 @@ def get_cultural_context(conversation_history):
 
 
 def adapt_content_to_level(content, user_level):
-    """Modify content based on user's learning level"""
+    """Modify content based on user's learning level - keeping it conversational"""
     level_data = LEARNING_LEVELS.get(user_level, LEARNING_LEVELS["beginner"])
 
-    # In a real implementation, this would be more sophisticated
-    # This is a simplified version for demonstration
+    # Use level_data to determine how to adapt the content
+    explanation_depth = level_data.get("explanation_depth", "basic")
+    terminology = level_data.get("terminology", "simple")
+    cultural_context = level_data.get("cultural_context", "introductory")
 
-    if user_level == "novice":
-        # Simplify terminology and add more explanations
-        content = content.replace("strategic positioning", "good placement")
-        content = content.replace("trajectory", "path")
-        content += "\n\nDoes this make sense? I can explain any part in simpler terms if needed."
+    # Adapt based on explanation depth
+    if explanation_depth == "basic":
+        # Keep it super simple
+        content = content.replace("strategic positioning", "where you place your marble")
+        content = content.replace("trajectory", "how it moves")
+        content = content.replace("intricate", "detailed")
 
-    elif user_level == "advanced":
-        # Add more complex considerations
-        if "strategy" in content.lower():
-            content += "\n\nAdvanced players often consider the psychological aspects of gameplay, including misdirection and pattern recognition when planning their moves."
+        # Only add clarification if response is getting complex
+        if len(content.split()) > 30:
+            content += " Make sense?"
+
+    elif explanation_depth == "expanded":
+        # Add a bit more detail but keep it friendly
+        content = content.replace("strategic positioning", "where you place your marble (that's strategy!)")
+        content = content.replace("trajectory", "path it takes")
+
+    elif explanation_depth == "detailed":
+        # Keep technical terms but add casual explanations
+        if "strategy" in content.lower() and len(content.split()) < 40:
+            content += " You probably know about reading the angles and stuff too."
+
+    elif explanation_depth == "comprehensive":
+        # Add depth but keep it conversational
+        if "strategy" in content.lower() and len(content.split()) < 50:
+            content += " You probably know about the mind games too, right?"
+
+    # Adapt terminology based on level
+    if terminology == "simple":
+        # Replace complex terms with simple ones
+        content = content.replace("traditional methodology", "old ways of playing")
+        content = content.replace("cultural significance", "why it's important")
+        content = content.replace("intergenerational", "between different ages")
+
+    elif terminology == "introducing specialized terms":
+        # Keep terms but add explanations
+        specialized_terms = ["trajectory", "strategy", "cultural", "traditional"]
+        for term in specialized_terms:
+            if term in content.lower() and f"({term}" not in content.lower():
+                content = content.replace(term, f"{term} (game term)")
+
+    # Adapt cultural context if needed
+    if cultural_context == "introductory":
+        # Keep cultural references simple
+        content = content.replace("East African tradition", "how they play in Kenya")
+        content = content.replace("dialectical variations", "different ways to play")
+
+    elif cultural_context == "specific regional variations":
+        # Add regional details when appropriate
+        if "regions" in content.lower() or "countries" in content.lower():
+            content += " Different areas have their own special rules, you know."
+
+    # Always trim if response is getting too long
+    if len(content.split()) > 40:
+        sentences = content.split('.')
+        if len(sentences) > 2:
+            content = '. '.join(sentences[:2]) + "."
+            content += " Want to know more about any specific part?"
 
     return content
 
