@@ -486,6 +486,9 @@ async def on_message(message: cl.Message):
         suggestion_msg = cl.Message(content="What interests you?", actions=actions)
         await suggestion_msg.send()
 
+        # Add a hint about visual explanations
+        await cl.Message(content="(Ask about rules or 'how to play' and I'll show you with drawings! 🎨)").send()
+
     elif waiting_for_reflection:
         # Store user's reflection response
         reflection_question = cl.user_session.get("current_reflection_question", "")
@@ -822,6 +825,10 @@ async def on_dynamic_suggestion_action(action):
                 elements=[topic_image]
             )
             await image_message.send()
+
+        # Add ASCII art hint for rules questions
+        if "rules" in question.lower() or "how" in question.lower() or "play" in question.lower():
+            await cl.Message(content="Let me draw this out for you! 📐").send()
 
         # Process the message
         await on_message(cl.Message(content=question))
